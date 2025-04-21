@@ -54,11 +54,32 @@ class FractalMountains {
         const drawingWidth = this.canvas.width - (borderSize * 2);
         const spacing = drawingWidth / (vertices.length - 1);
         
+        // Define rhombus parameters (matching vertex shader)
+        const sideLength = 0.75;
+        const sqrt3Over2 = Math.sqrt(3) / 2;
+        const rectangleHeight = sideLength * sqrt3Over2;
+        
         // Draw each vertex as a small circle
         vertices.forEach((row, i) => {
             row.forEach((height, j) => {
-                const x = borderSize + (j * spacing);
-                const y = borderSize + (i * spacing);
+                // Calculate normalized coordinates (0 to 1)
+                const normalizedY = i / (vertices.length - 1);
+                const normalizedX = j / (vertices.length - 1);
+                
+                // Center coordinates (-0.5 to 0.5)
+                const centeredY = normalizedY - 0.5;
+                const centeredX = normalizedX - 0.5;
+                
+                // Scale to create rectangle of correct dimensions
+                const scaledY = centeredY * rectangleHeight * drawingWidth;
+                const scaledX = centeredX * sideLength * drawingWidth;
+                
+                // Apply horizontal shear based on y coordinate
+                const shearAmount = -scaledY / (rectangleHeight * drawingWidth) * 0.5 * sideLength * drawingWidth;
+                
+                // Calculate final position
+                const x = borderSize + (drawingWidth / 2) + scaledX + shearAmount;
+                const y = borderSize + (drawingWidth / 2) + scaledY;
                 
                 this.ctx!.beginPath();
                 this.ctx!.arc(x, y, 2, 0, Math.PI * 2);
