@@ -61,8 +61,8 @@ class FractalMountains {
         const drawingWidth = this.canvas.width - (borderSize * 2);
         // Define rhombus parameters
         const sideLength = 0.75;
-        const sqrt3Over2 = Math.sqrt(3) / 2;
-        const rectangleHeight = sideLength * sqrt3Over2;
+        // ratio of equilateral triangle height to side length
+        const rectangleHeight = sideLength * Math.sqrt(3) / 2;
         // Function to calculate point coordinates
         const calculatePoint = (i, j) => {
             const normalizedY = i / (vertices.length - 1);
