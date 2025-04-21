@@ -11,7 +11,7 @@
             margin: 20px auto;
             padding: 0 20px;
         }
-        .input-group {
+        .interactive-triangle-container {
             margin: 20px 0;
         }
         label {
@@ -22,9 +22,19 @@
 <body>
     <h1>Fractal Mountains</h1>
     <p>Based on <a href="https://benhaller.com/pubs/Meir1991.pdf" target="_blank">this paper</a> by Eli Meir and Ben Haller</p>
-    <div class="input-group">
+    <h2>Part 1: Making the triangles</h2>
+    <p>
+        We represent the mountain as a collection of vertices.
+        The most efficient way to store them is simply as a 2D array of height values.
+        The x and y coordinates can be derived from the index in the array.
+        The z coordinate is the height value.
+        The triangles are then simply the 3 vertices that make up each triangle.
+        The smallest supported number of points is 4. We use this to create a rombus.
+    </p>
+    <div class="interactive-triangle-container">
+        <canvas id="triangle-canvas" width="400" height="400"></canvas>
         <label for="n-iters">Number of iterations:</label>
-        <input type="number" id="n-iters" min="1" value="1">
+        <input type="number" id="n-iters" min="0" value="0">
     </div>
     <script src="src/index.js"></script>
 </body>
