@@ -47,13 +47,18 @@ class FractalMountains {
         this.ctx.fillStyle = 'black';
         this.ctx.strokeStyle = 'black';
         
-        const spacing = this.canvas.width / (vertices.length - 1);
+        // Calculate border size (10% of canvas width/height)
+        const borderSize = this.canvas.width * 0.1;
+        
+        // Calculate available space for drawing (accounting for borders)
+        const drawingWidth = this.canvas.width - (borderSize * 2);
+        const spacing = drawingWidth / (vertices.length - 1);
         
         // Draw each vertex as a small circle
         vertices.forEach((row, i) => {
             row.forEach((height, j) => {
-                const x = j * spacing;
-                const y = i * spacing;
+                const x = borderSize + (j * spacing);
+                const y = borderSize + (i * spacing);
                 
                 this.ctx!.beginPath();
                 this.ctx!.arc(x, y, 2, 0, Math.PI * 2);
