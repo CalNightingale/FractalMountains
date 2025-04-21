@@ -10,18 +10,21 @@
 <body>
     <h1>Fractal Mountains</h1>
     <p>Based on <a href="https://benhaller.com/pubs/Meir1991.pdf" target="_blank">this paper</a> by Eli Meir and Ben Haller</p>
-    <h2>Part 1: Making the triangles</h2>
+    <h2>Part 1: Making Triangles</h2>
+    <div class="interactive-triangle-container">
+        <canvas id="triangle-canvas" width="400" height="400"></canvas>
+        <label for="n-iters">Number of iterations:</label>
+        <input type="number" id="n-iters" min="0" value="0">
+    </div>
     <p>We represent the mountain as a collection of vertices.</p>
     <p>The most efficient way to store them is simply as a 2D array of height values.</p>
     <p>The x and y coordinates can be derived from the index in the array, and the z coordinate is the height value.</p>
     <p>If the mountain were to be viewed from above, it would appear as 2D triangles. The z coordinate would be irrelevant.</p>
     <p>The triangles are then simply the 3 vertices that make up each triangle.</p>
     <p>The smallest supported number of points is 4. We use this to create a rombus.</p>
-    <div class="interactive-triangle-container">
-        <canvas id="triangle-canvas" width="400" height="400"></canvas>
-        <label for="n-iters">Number of iterations:</label>
-        <input type="number" id="n-iters" min="0" value="0">
-    </div>
     <script src="src/index.js"></script>
+
+    <h2>Part 2: Adding Height Values</h2>
+    <p>Coming soon!</p>
 </body>
 </html> 
