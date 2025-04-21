@@ -19,9 +19,8 @@
     <p>We represent the mountain as a collection of vertices.</p>
     <p>The most efficient way to store them is simply as a 2D array of height values.</p>
     <p>The x and y coordinates can be derived from the index in the array, and the z coordinate is the height value.</p>
-    <p>If the mountain were to be viewed from above, it would appear as 2D triangles. The z coordinate would be irrelevant.</p>
-    <p>The triangles are then simply the 3 vertices that make up each triangle.</p>
-    <p>The smallest supported number of points is 4. We use this to create a rombus.</p>
+    <p>When viewed directly from above, the mountain appears as a grid of 2D triangles. The z coordinate is irrelevant.</p>
+    <p>The triangles are then formed by connecting adjacent vertices.</p>
     <script src="src/index.js"></script>
 
     <h2>Part 2: Adding Height Values</h2>
