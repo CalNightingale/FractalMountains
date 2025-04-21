@@ -1,0 +1,14 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.interactive-triangle-container {
+    margin: 20px 0;
+}
+
+label {
+    margin-right: 10px;
+} 
