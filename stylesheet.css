@@ -7,8 +7,17 @@ body {
 
 .interactive-triangle-container {
     margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
 }
 
 label {
     margin-right: 10px;
+}
+
+#triangle-canvas {
+    width: 400px;
+    height: 400px;
 } 
