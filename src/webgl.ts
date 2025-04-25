@@ -52,11 +52,13 @@ class WebGLMountains {
     }
 
     private setupControls(): void {
-        const iterInput = document.getElementById('webgl-n-iters') as HTMLInputElement;
+        const iterSlider = document.getElementById('webgl-n-iters') as HTMLInputElement;
+        const iterValue = document.getElementById('webgl-n-iters-value') as HTMLSpanElement;
         const wireframeCheckbox = document.getElementById('show-wireframe') as HTMLInputElement;
 
-        iterInput.addEventListener('change', (e) => {
+        iterSlider.addEventListener('input', (e) => {
             const target = e.target as HTMLInputElement;
+            iterValue.textContent = target.value;
             this.updateNIters(parseInt(target.value));
         });
 
@@ -67,7 +69,8 @@ class WebGLMountains {
         });
 
         // Set initial values
-        this.updateNIters(parseInt(iterInput.value));
+        iterValue.textContent = iterSlider.value;
+        this.updateNIters(parseInt(iterSlider.value));
         this.showWireframe = wireframeCheckbox.checked;
     }
 

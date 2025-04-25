@@ -11,28 +11,28 @@
     <h1>Fractal Mountains</h1>
     <p>Based on <a href="https://benhaller.com/pubs/Meir1991.pdf" target="_blank">this paper</a> by Eli Meir and Ben Haller</p>
     <h2>Part 1: Making Triangles</h2>
-    <div class="interactive-triangle-container">
-        <canvas id="triangle-canvas" width="400" height="400"></canvas>
-        <label for="n-iters">Number of iterations:</label>
-        <input type="number" id="n-iters" min="0" value="0">
-    </div>
-    <p>We represent the mountain as a collection of vertices.</p>
-    <p>The most efficient way to store them is simply as a 2D array of height values.</p>
-    <p>The x and y coordinates can be derived from the index in the array, and the z coordinate is the height value.</p>
-    <p>When viewed directly from above, the mountain appears as a grid of 2D triangles. The z coordinate is irrelevant.</p>
-    <p>The triangles are then formed by connecting adjacent vertices.</p>
-    <script src="src/index.js"></script>
-
-    <h2>Part 2: Adding Height Values</h2>
     <div class="interactive-3d-container">
         <canvas id="3d-canvas" width="400" height="400"></canvas>
-        <label for="webgl-n-iters">Number of iterations:</label>
-        <input type="number" id="webgl-n-iters" min="0" value="0">
-        <div>
+        <div class="control-group">
+            <label for="webgl-n-iters">
+                Number of iterations: 
+                <span class="value-display" id="webgl-n-iters-value">0</span>
+            </label>
+            <input type="range" id="webgl-n-iters" min="0" max="8" value="0" step="1">
+        </div>
+        <div class="checkbox-container">
             <input type="checkbox" id="show-wireframe" checked>
             <label for="show-wireframe">Show wireframe</label>
         </div>
     </div>
     <script src="src/webgl.js"></script>
+    <p>We represent the mountain as a collection of vertices.</p>
+    <p>The most efficient way to store them is simply as a 2D array of height values.</p>
+    <p>The x and y coordinates can be derived from the index in the array, and the z coordinate is the height value.</p>
+    <p>When viewed directly from above, the mountain appears as a grid of 2D triangles. The z coordinate is irrelevant.</p>
+    <p>The triangles are then formed by connecting adjacent vertices.</p>
+
+    <h2>Part 2: Adding Height Values</h2>
+
 </body>
 </html> 
