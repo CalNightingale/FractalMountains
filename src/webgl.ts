@@ -174,9 +174,9 @@ class WebGLMountains {
         const vertices: number[] = [];
         const indices: number[] = [];
         
-        const sideLength = 0.75;
+        const sideLength = 1;
         const rectangleHeight = sideLength * Math.sqrt(3) / 2;
-        const scale = 0.95;
+        const scale = 1;
 
         for (let i = 0; i < points_per_side; i++) {
             for (let j = 0; j < points_per_side; j++) {
