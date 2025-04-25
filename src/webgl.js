@@ -80,19 +80,21 @@ function createGeometry(nIters) {
     const points_per_side = 2 ** nIters + 1;
     const vertices = [];
     const indices = [];
-    // Scale factors to fit in clip space (-1 to 1)
-    const scale = 0.8; // Make it slightly smaller than the full canvas
+    // Match the original canvas parameters
+    const sideLength = 0.75;
+    const rectangleHeight = sideLength * Math.sqrt(3) / 2;
+    const scale = 0.95; // Increase scale to fit viewport better
     for (let i = 0; i < points_per_side; i++) {
         for (let j = 0; j < points_per_side; j++) {
             const normalizedY = i / (points_per_side - 1);
             const normalizedX = j / (points_per_side - 1);
-            // Convert to clip space (-1 to 1)
-            const y = (normalizedY * 2 - 1) * scale;
-            const x = (normalizedX * 2 - 1) * scale;
-            // Apply shear transform
-            const shearAmount = -y * 0.5;
-            const finalX = x + shearAmount;
-            vertices.push(finalX, y);
+            const centeredY = (normalizedY - 0.5) * scale;
+            const centeredX = (normalizedX - 0.5) * scale;
+            // Apply shear transform in the opposite direction
+            const shearAmount = centeredY * 0.5; // Removed negative sign
+            const finalX = (centeredX + shearAmount) * sideLength;
+            const finalY = centeredY * rectangleHeight;
+            vertices.push(finalX, finalY);
         }
     }
     // Generate triangle indices (unchanged)
@@ -108,8 +110,8 @@ function createGeometry(nIters) {
     }
     return { vertices, indices };
 }
-// Create geometry with fewer iterations to start
-const geometry = createGeometry(2); // Start with 2 iterations for testing
+// Create geometry with 3 iterations to match canvas version
+const geometry = createGeometry(3);
 // Set up vertex buffer
 const vertexBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -121,7 +123,7 @@ gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(geometry.indices), gl.STA
 // Enable alpha blending
 gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-// Simple orthographic projection matrix
+// Adjust projection matrix to match the aspect ratio
 const projectionMatrix = [
     1, 0, 0, 0,
     0, 1, 0, 0,
