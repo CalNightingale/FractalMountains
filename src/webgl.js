@@ -9,12 +9,21 @@ class WebGLMountains {
         // Initialize canvas and WebGL context
         this.canvas = document.getElementById("3d-canvas");
         this.canvas.style.backgroundColor = "#EEEEEE";
-        this.canvas.width = 400;
-        this.canvas.height = 400;
-        const gl = this.canvas.getContext("webgl");
+        const gl = this.canvas.getContext("webgl", {
+            antialias: true, // Request antialiasing
+            preserveDrawingBuffer: true
+        });
         if (!gl)
             throw new Error("WebGL not supported");
         this.gl = gl;
+        // Add resize observer
+        const resizeObserver = new ResizeObserver(() => {
+            this.resizeCanvas();
+            this.drawScene();
+        });
+        resizeObserver.observe(this.canvas);
+        // Initial resize
+        this.resizeCanvas();
         // Initialize shaders and programs
         this.initShaders();
         // Set up initial geometry
@@ -179,6 +188,22 @@ class WebGLMountains {
             for (let i = 0; i < this.geometry.indices.length; i += 3) {
                 this.gl.drawElements(this.gl.LINE_LOOP, 3, this.gl.UNSIGNED_SHORT, i * 2);
             }
+        }
+    }
+    resizeCanvas() {
+        // Get the device pixel ratio
+        const dpr = window.devicePixelRatio || 1;
+        // Get the size of the canvas in CSS pixels
+        const displayWidth = Math.floor(this.canvas.clientWidth * dpr);
+        const displayHeight = Math.floor(this.canvas.clientHeight * dpr);
+        // Check if the canvas is not the same size
+        if (this.canvas.width !== displayWidth ||
+            this.canvas.height !== displayHeight) {
+            // Make the canvas the same size
+            this.canvas.width = displayWidth;
+            this.canvas.height = displayHeight;
+            // Update the viewport to match
+            this.gl.viewport(0, 0, displayWidth, displayHeight);
         }
     }
 }
