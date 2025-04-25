@@ -6,21 +6,21 @@ class WebGLMountains {
     private geometry: { vertices: number[], indices: number[] };
     
     // Shaders and programs
-    private vertexShader: WebGLShader;
-    private fragmentShader: WebGLShader;
-    private wireframeFragmentShader: WebGLShader;
-    private shaderProgram: WebGLProgram;
-    private wireframeProgram: WebGLProgram;
+    private vertexShader!: WebGLShader;
+    private fragmentShader!: WebGLShader;
+    private wireframeFragmentShader!: WebGLShader;
+    private shaderProgram!: WebGLProgram;
+    private wireframeProgram!: WebGLProgram;
     
     // Buffers
     private vertexBuffer: WebGLBuffer | null = null;
     private indexBuffer: WebGLBuffer | null = null;
     
     // Shader locations
-    private positionLocation: number;
-    private matrixLocation: WebGLUniformLocation | null;
-    private wireframePositionLocation: number;
-    private wireframeMatrixLocation: WebGLUniformLocation | null;
+    private positionLocation!: number;
+    private matrixLocation!: WebGLUniformLocation | null;
+    private wireframePositionLocation!: number;
+    private wireframeMatrixLocation!: WebGLUniformLocation | null;
 
     constructor() {
         // Initialize canvas and WebGL context
