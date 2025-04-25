@@ -10,8 +10,6 @@
 
 const canvas = document.getElementById("3d-canvas") as HTMLCanvasElement;
 canvas.style.backgroundColor = "#EEEEEE";
-canvas.width = 800;  // or whatever size you want
-canvas.height = 800;
 
 // Tell the canvas element that we will use WebGL to draw
 // inside the element (and not the default raster engine):
@@ -80,6 +78,43 @@ if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
     console.error('Fragment shader compilation failed:', gl.getShaderInfoLog(fragmentShader));
 }
 
+// After the first fragment shader setup, add new shaders for wireframe
+
+// Vertex shader can be reused for both fill and wireframe
+
+// Add new fragment shader for wireframe
+const wireframeFragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+if (!wireframeFragmentShader) {
+  throw new Error("Failed to create wireframe fragment shader");
+}
+gl.shaderSource(
+  wireframeFragmentShader,
+  `
+precision mediump float;
+
+void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);  // Black color for lines
+}
+`
+);
+gl.compileShader(wireframeFragmentShader);
+if (!gl.getShaderParameter(wireframeFragmentShader, gl.COMPILE_STATUS)) {
+    console.error('Wireframe fragment shader compilation failed:', gl.getShaderInfoLog(wireframeFragmentShader));
+}
+
+// Create second shader program for wireframe
+const wireframeProgram = gl.createProgram();
+gl.attachShader(wireframeProgram, vertexShader);  // Reuse vertex shader
+gl.attachShader(wireframeProgram, wireframeFragmentShader);
+gl.linkProgram(wireframeProgram);
+if (!gl.getProgramParameter(wireframeProgram, gl.LINK_STATUS)) {
+    console.error('Wireframe program linking failed:', gl.getProgramInfoLog(wireframeProgram));
+}
+
+// Get locations for wireframe program
+const wireframePositionLocation = gl.getAttribLocation(wireframeProgram, "a_position");
+const wireframeMatrixLocation = gl.getUniformLocation(wireframeProgram, "u_matrix");
+
 // Takes the compiled shaders and adds them to the canvas'
 // WebGL context so that can be used:
 
@@ -132,8 +167,8 @@ function createGeometry(nIters: number) {
             const bottomLeft = (i + 1) * points_per_side + j;
             const bottomRight = bottomLeft + 1;
 
-            indices.push(topLeft, bottomLeft, bottomRight);
-            indices.push(topLeft, bottomRight, topRight);
+            indices.push(topLeft, topRight, bottomLeft);    // First triangle
+            indices.push(bottomLeft, topRight, bottomRight); // Second triangle
         }
     }
 
@@ -165,7 +200,7 @@ const projectionMatrix = [
     0, 0, 0, 1
 ];
 
-// Draw scene
+// Modify drawScene to draw both filled triangles and wireframe
 function drawScene() {
     if (!gl) return;
 
@@ -173,13 +208,26 @@ function drawScene() {
     gl.clearColor(0.93, 0.93, 0.93, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    // First draw filled triangles
+    gl.useProgram(shaderProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(positionLocation);
-
     gl.uniformMatrix4fv(matrixLocation, false, projectionMatrix);
-
     gl.drawElements(gl.TRIANGLES, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
+
+    // Then draw wireframe
+    gl.useProgram(wireframeProgram);
+    gl.vertexAttribPointer(wireframePositionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(wireframePositionLocation);
+    gl.uniformMatrix4fv(wireframeMatrixLocation, false, projectionMatrix);
+
+    // Draw lines for each triangle
+    gl.lineWidth(1);  // Set line width
+    for (let i = 0; i < geometry.indices.length; i += 3) {
+        const indices = geometry.indices.slice(i, i + 3);
+        gl.drawElements(gl.LINE_LOOP, 3, gl.UNSIGNED_SHORT, i * 2);
+    }
 }
 
 // Initial draw
@@ -191,3 +239,214 @@ document.body.appendChild(canvas);
 
 // Credit: based on this JSFiddle by Subzey
 // https://jsfiddle.net/subzey/52sowezj/
+
+class WebGLMountains {
+    private nIters: number = 0;
+    private showWireframe: boolean = true;
+    private gl: WebGLRenderingContext;
+    private vertexShader: WebGLShader;
+    private fragmentShader: WebGLShader;
+    private wireframeFragmentShader: WebGLShader;
+    private shaderProgram: WebGLProgram;
+    private wireframeProgram: WebGLProgram;
+    private vertexBuffer: WebGLBuffer | null = null;
+    private indexBuffer: WebGLBuffer | null = null;
+    private geometry: { vertices: number[], indices: number[] };
+    private canvas: HTMLCanvasElement;
+
+    constructor() {
+        // Initialize canvas and WebGL context
+        this.canvas = document.getElementById("3d-canvas") as HTMLCanvasElement;
+        this.canvas.style.backgroundColor = "#EEEEEE";
+        this.canvas.width = 400;
+        this.canvas.height = 400;
+
+        const gl = this.canvas.getContext("webgl");
+        if (!gl) throw new Error("WebGL not supported");
+        this.gl = gl;
+
+        // Initialize shaders and programs
+        this.initShaders();
+        
+        // Set up initial geometry
+        this.geometry = this.createGeometry(0);
+        this.setupBuffers();
+
+        // Enable alpha blending
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+
+        // Set up UI controls
+        this.setupControls();
+        
+        // Initial draw
+        this.drawScene();
+    }
+
+    private setupControls(): void {
+        const iterInput = document.getElementById('webgl-n-iters') as HTMLInputElement;
+        const wireframeCheckbox = document.getElementById('show-wireframe') as HTMLInputElement;
+
+        iterInput.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.updateNIters(parseInt(target.value));
+        });
+
+        wireframeCheckbox.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            this.showWireframe = target.checked;
+            this.drawScene();
+        });
+
+        // Set initial values
+        this.updateNIters(parseInt(iterInput.value));
+        this.showWireframe = wireframeCheckbox.checked;
+    }
+
+    private initShaders(): void {
+        // Create and compile vertex shader
+        this.vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER)!;
+        this.gl.shaderSource(this.vertexShader, `
+            attribute vec2 a_position;
+            uniform mat4 u_matrix;
+
+            void main() {
+                gl_Position = u_matrix * vec4(a_position, 0, 1);
+            }
+        `);
+        this.gl.compileShader(this.vertexShader);
+
+        // Create and compile fragment shaders
+        this.fragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!;
+        this.gl.shaderSource(this.fragmentShader, `
+            precision mediump float;
+            void main() {
+                gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+            }
+        `);
+        this.gl.compileShader(this.fragmentShader);
+
+        this.wireframeFragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!;
+        this.gl.shaderSource(this.wireframeFragmentShader, `
+            precision mediump float;
+            void main() {
+                gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+        `);
+        this.gl.compileShader(this.wireframeFragmentShader);
+
+        // Create shader programs
+        this.shaderProgram = this.gl.createProgram()!;
+        this.gl.attachShader(this.shaderProgram, this.vertexShader);
+        this.gl.attachShader(this.shaderProgram, this.fragmentShader);
+        this.gl.linkProgram(this.shaderProgram);
+
+        this.wireframeProgram = this.gl.createProgram()!;
+        this.gl.attachShader(this.wireframeProgram, this.vertexShader);
+        this.gl.attachShader(this.wireframeProgram, this.wireframeFragmentShader);
+        this.gl.linkProgram(this.wireframeProgram);
+    }
+
+    private updateNIters(value: number): void {
+        this.nIters = value;
+        this.geometry = this.createGeometry(this.nIters);
+        this.setupBuffers();
+        this.drawScene();
+    }
+
+    private setupBuffers(): void {
+        // Set up vertex buffer
+        this.vertexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.geometry.vertices), this.gl.STATIC_DRAW);
+
+        // Set up index buffer
+        this.indexBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.geometry.indices), this.gl.STATIC_DRAW);
+    }
+
+    private createGeometry(nIters: number) {
+        const points_per_side = 2 ** nIters + 1;
+        const vertices: number[] = [];
+        const indices: number[] = [];
+        
+        const sideLength = 0.75;
+        const rectangleHeight = sideLength * Math.sqrt(3) / 2;
+        const scale = 0.95;
+
+        for (let i = 0; i < points_per_side; i++) {
+            for (let j = 0; j < points_per_side; j++) {
+                const normalizedY = i / (points_per_side - 1);
+                const normalizedX = j / (points_per_side - 1);
+                
+                const centeredY = (normalizedY - 0.5) * scale;
+                const centeredX = (normalizedX - 0.5) * scale;
+                
+                const shearAmount = centeredY * 0.5;
+                const finalX = (centeredX + shearAmount) * sideLength;
+                const finalY = centeredY * rectangleHeight;
+                
+                vertices.push(finalX, finalY);
+            }
+        }
+
+        for (let i = 0; i < points_per_side - 1; i++) {
+            for (let j = 0; j < points_per_side - 1; j++) {
+                const topLeft = i * points_per_side + j;
+                const topRight = topLeft + 1;
+                const bottomLeft = (i + 1) * points_per_side + j;
+                const bottomRight = bottomLeft + 1;
+
+                indices.push(topLeft, topRight, bottomLeft);    // First triangle
+                indices.push(bottomLeft, topRight, bottomRight); // Second triangle
+            }
+        }
+
+        return { vertices, indices };
+    }
+
+    private drawScene(): void {
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        this.gl.clearColor(0.93, 0.93, 0.93, 1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+        const projectionMatrix = [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ];
+
+        // Draw filled triangles
+        this.gl.useProgram(this.shaderProgram);
+        const positionLocation = this.gl.getAttribLocation(this.shaderProgram, "a_position");
+        const matrixLocation = this.gl.getUniformLocation(this.shaderProgram, "u_matrix");
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.uniformMatrix4fv(matrixLocation, false, projectionMatrix);
+        this.gl.drawElements(this.gl.TRIANGLES, this.geometry.indices.length, this.gl.UNSIGNED_SHORT, 0);
+
+        // Draw wireframe if enabled
+        if (this.showWireframe) {
+            this.gl.useProgram(this.wireframeProgram);
+            const wireframePositionLocation = this.gl.getAttribLocation(this.wireframeProgram, "a_position");
+            const wireframeMatrixLocation = this.gl.getUniformLocation(this.wireframeProgram, "u_matrix");
+
+            this.gl.vertexAttribPointer(wireframePositionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            this.gl.enableVertexAttribArray(wireframePositionLocation);
+            this.gl.uniformMatrix4fv(wireframeMatrixLocation, false, projectionMatrix);
+
+            for (let i = 0; i < this.geometry.indices.length; i += 3) {
+                this.gl.drawElements(this.gl.LINE_LOOP, 3, this.gl.UNSIGNED_SHORT, i * 2);
+            }
+        }
+    }
+}
+
+// Start the application when the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new WebGLMountains();
+});
